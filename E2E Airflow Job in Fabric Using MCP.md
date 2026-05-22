@@ -18,6 +18,7 @@ Two MCP servers do the heavy lifting: the **DataFactory MCP** creates the Copy J
 - VS Code with GitHub Copilot (Agent mode)
 - [DataFactory MCP server](https://aka.ms/DFMCPAirflow) installed and registered in your VS Code MCP settings (`Microsoft.DataFactory.MCP`, .NET 10.0+)
 - [Fabric MCP server](https://aka.ms/FabricMCP) installed and registered in your VS Code MCP settings
+- Here are the Nuget packages for the Fabric and Data Factory MCPs: [Data Factory MCP](https://www.nuget.org/packages/Microsoft.DataFactory.MCP/0.22.0-beta) [Fabric MCP](https://www.nuget.org/packages/Microsoft.Fabric.Mcp)
 - A Fabric workspace with an assigned capacity (F2 or higher — Free and PPU workspaces don't support Airflow Jobs)
 - A Lakehouse in that workspace (you'll need its name; Copilot will discover it)
 - An ADLS Gen2 account with files you want to ingest (connection details handy)
