@@ -2,7 +2,7 @@
 
 Reference for mapping Synapse Analytics linked service types to Fabric Connection types for use in pipeline activities.
 
-> **Scope**: This file covers pipeline-oriented connection migration. For notebook connectivity (ADLS shortcuts, `notebookutils.credentials`), see the **synapse-migration** skill's [connectivity-migration.md](../../synapse-migration/resources/connectivity-migration.md).
+> **Scope**: This file covers pipeline-oriented connection migration. Notebook connectivity (ADLS shortcuts, `notebookutils.credentials`) is handled separately as part of Synapse notebook-to-Fabric migration.
 
 ---
 

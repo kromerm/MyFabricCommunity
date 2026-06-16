@@ -16,13 +16,6 @@ description: >
   "pipeline migration from synapse".
 ---
 
-> **Update Check — ONCE PER SESSION (mandatory for live migration runs)**
-> The first time this skill is used in a session, run the **check-updates** skill before proceeding.
-> - **GitHub Copilot CLI / VS Code**: invoke the `check-updates` skill.
-> - **Claude Code / Cowork / Cursor / Windsurf / Codex**: compare local vs remote package.json version.
-> - Skip if the check was already performed earlier in this session.
-> - **Skip in eval / guidance-only mode**: if the user's prompt explicitly forbids tool/API calls (e.g. *"Do not call any APIs or create any resources"*) or the skill is being invoked for offline JSON translation / eval, do **not** run the update check — answer the prompt directly. The check is only required for live-migration runs that will call Fabric or Synapse APIs.
-
 > **CRITICAL NOTES**
 > 1. Fabric does NOT have a "Dataset" item type — all dataset properties are **inlined** into activity `typeProperties`
 > 2. Linked Services map to Fabric **Connections** — in pipeline activity JSON, `referenceName` must match the Fabric connection **display name** (not the connection GUID)
@@ -36,14 +29,14 @@ description: >
 
 ## Prerequisite Knowledge
 
-These companion documents provide general Fabric REST patterns. **Do NOT read them upfront** — reference only when a specific phase requires a pattern not already covered in this skill's resource files:
+This skill assumes familiarity with the following general Fabric patterns. Reference the official Microsoft Fabric REST API documentation only when a specific phase requires a pattern not already covered in this skill's resource files:
 
-- [COMMON-CORE.md](../../common/COMMON-CORE.md) — General Fabric REST API patterns, authentication & token audiences, item discovery via JMESPath
-- [COMMON-CLI.md](../../common/COMMON-CLI.md) — `az rest` / `az login` CLI patterns, authentication recipes, pipeline run/schedule operations
-- [ITEM-DEFINITIONS-CORE.md](../../common/ITEM-DEFINITIONS-CORE.md) — `DataPipeline` and `VariableLibrary` item definition structures (pipeline-content.json, variables.json)
-- [SPARK-AUTHORING-CORE.md](../../common/SPARK-AUTHORING-CORE.md) — Fabric notebook item creation (needed when notebook items don't exist yet in Fabric)
+- **General Fabric REST API patterns** — authentication & token audiences, item discovery via JMESPath
+- **CLI patterns** — `az rest` / `az login` authentication recipes, pipeline run/schedule operations
+- **Item definition structures** — `DataPipeline` and `VariableLibrary` definitions (pipeline-content.json, variables.json)
+- **Fabric notebook item creation** — needed when notebook items don't exist yet in Fabric
 
-> For the notebook side of the migration (the notebooks that pipeline activities call), use the companion **synapse-migration** skill to migrate the notebook content itself.
+> For the notebook side of the migration (the notebooks that pipeline activities call), migrate the notebook content itself first using a Synapse notebook-to-Fabric migration approach.
 
 ---
 
@@ -276,11 +269,11 @@ After pipeline migration, hand off to these companion skills and tools:
 
 | Task | Skill / Tool |
 |---|---|
-| Migrate notebook content (mssparkutils → notebookutils, linked services) | **synapse-migration** skill |
-| Schedule migrated pipelines | [COMMON-CLI.md § Job Scheduling](../../common/COMMON-CLI.md) |
+| Migrate notebook content (mssparkutils → notebookutils, linked services) | Synapse notebook-to-Fabric migration |
+| Schedule migrated pipelines | Fabric REST API job scheduling (`az rest`) |
 | Monitor pipeline runs | Fabric workspace → Monitor hub |
-| Build new Fabric pipelines | Refer to [ITEM-DEFINITIONS-CORE.md § DataPipeline](../../common/ITEM-DEFINITIONS-CORE.md) |
-| Explore migrated Lakehouse data post-pipeline run | `spark-consumption-cli` or `sqldw-consumption-cli` skill |
+| Build new Fabric pipelines | Fabric `DataPipeline` item definition docs |
+| Explore migrated Lakehouse data post-pipeline run | Fabric Spark / SQL endpoint querying |
 
 ---
 
