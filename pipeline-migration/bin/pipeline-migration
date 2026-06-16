@@ -1,0 +1,243 @@
+#!/usr/bin/env python3
+"""Small local harness for the pipeline-migration skill.
+
+The migration logic still lives in SKILL.md and resources/*.md. This wrapper keeps
+setup checks and prompt generation deterministic without performing destructive actions.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+
+SKILL_DIR = Path(__file__).resolve().parents[1]
+MANIFEST_PATH = SKILL_DIR / "skill.json"
+
+TOKEN_AUDIENCES = {
+    "Synapse data plane": "https://dev.azuresynapse.net",
+    "Synapse ARM": "https://management.azure.com",
+    "Fabric REST API": "https://api.fabric.microsoft.com",
+}
+
+
+def run_command(args: list[str], timeout: int = 30) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        args,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
+
+
+def load_manifest() -> dict:
+    with MANIFEST_PATH.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def check_package() -> int:
+    manifest = load_manifest()
+    missing: list[str] = []
+
+    paths: list[str] = []
+    for key in ("entrypoint",):
+        value = manifest.get(key)
+        if isinstance(value, str):
+            paths.append(value)
+    for key in ("commands", "resources", "examples", "docs"):
+        values = manifest.get(key, [])
+        if isinstance(values, list):
+            paths.extend(str(value) for value in values)
+
+    for relative_path in paths:
+        if not (SKILL_DIR / relative_path).exists():
+            missing.append(relative_path)
+
+    if missing:
+        print("Package check failed. Missing paths:")
+        for relative_path in missing:
+            print(f"- {relative_path}")
+        return 1
+
+    print(f"Package check passed for {manifest.get('name', 'pipeline-migration')}.")
+    return 0
+
+
+def doctor(args: argparse.Namespace) -> int:
+    failures = 0
+
+    az_path = shutil.which("az")
+    if not az_path:
+        print("FAIL Azure CLI not found on PATH.")
+        return 1
+
+    print(f"OK Azure CLI found: {az_path}")
+
+    account = run_command(["az", "account", "show", "--output", "json"])
+    if account.returncode != 0:
+        print("FAIL Azure CLI is not signed in. Run: az login")
+        if account.stderr.strip():
+            print(account.stderr.strip())
+        return 1
+
+    try:
+        account_json = json.loads(account.stdout)
+    except json.JSONDecodeError:
+        print("FAIL Could not parse az account show output.")
+        return 1
+
+    print(f"OK Azure account: {account_json.get('name', '<unknown>')}")
+
+    if args.skip_token_check:
+        print("SKIP Token audience checks.")
+        return failures
+
+    for label, audience in TOKEN_AUDIENCES.items():
+        token = run_command(
+            [
+                "az",
+                "account",
+                "get-access-token",
+                "--resource",
+                audience,
+                "--query",
+                "accessToken",
+                "--output",
+                "tsv",
+            ]
+        )
+        if token.returncode == 0 and token.stdout.strip():
+            print(f"OK Token audience: {label}")
+        else:
+            failures += 1
+            print(f"FAIL Token audience: {label} ({audience})")
+            if token.stderr.strip():
+                print(token.stderr.strip())
+
+    return 1 if failures else 0
+
+
+def emit_assessment_prompt(args: argparse.Namespace) -> int:
+    print(
+        f"""Use the pipeline-migration skill in this folder to assess Synapse workspace
+{args.synapse_workspace}. This is read-only: do not create, update, or delete Fabric
+items. Load SKILL.md, then load resources/pipeline-assessment.md only if needed.
+
+Return:
+- Executive summary
+- Pipeline and activity inventory
+- Linked services, datasets, global parameters, and notebook dependencies
+- Parked or unsupported activities
+- Missing prerequisites
+- Recommended migration plan"""
+    )
+    return 0
+
+
+def emit_migration_prompt(args: argparse.Namespace) -> int:
+    overwrite_policy = (
+        "You may overwrite existing Fabric items only after explicit confirmation."
+        if args.allow_overwrite
+        else "Do not overwrite existing Fabric items."
+    )
+
+    print(
+        f"""Use the pipeline-migration skill to migrate Synapse pipelines to Fabric.
+
+Source Synapse workspace: {args.synapse_workspace}
+Target Fabric workspace: {args.fabric_workspace}
+Pipelines: {args.pipelines}
+Fabric name suffix: {args.suffix}
+
+Safety:
+- Run assessment first and pause with the summary before creating Fabric items.
+- {overwrite_policy}
+- Pause and report if a referenced Fabric notebook is missing.
+- Pause and report if a required Fabric connection is missing.
+- Do not migrate triggers or schedules.
+
+Load SKILL.md first, then use resources/pipeline-orchestrator.md for the migration flow."""
+    )
+    return 0
+
+
+def emit_validation_prompt(args: argparse.Namespace) -> int:
+    source_line = (
+        f"Source Synapse workspace: {args.synapse_workspace}"
+        if args.synapse_workspace
+        else "Source Synapse workspace: <use the workspace from the migration context>"
+    )
+
+    print(
+        f"""Use the pipeline-migration skill to validate migrated Fabric pipelines.
+
+{source_line}
+Target Fabric workspace: {args.fabric_workspace}
+
+Load SKILL.md, then use resources/validation-testing.md and resources/migration-report.md.
+Compare source and target pipeline structure, activity counts, notebook GUID references,
+connection display names, Variable Library references, parked activities, and validation
+run results. Do not recreate triggers or schedules."""
+    )
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="pipeline-migration",
+        description="Local harness for the Synapse pipeline to Fabric migration skill.",
+    )
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    subparsers.add_parser("check-package", help="Validate manifest paths in the skill package.")
+
+    doctor_parser = subparsers.add_parser("doctor", help="Check local Azure CLI readiness.")
+    doctor_parser.add_argument(
+        "--skip-token-check",
+        action="store_true",
+        help="Only check az login state; skip token audience acquisition.",
+    )
+
+    assess_parser = subparsers.add_parser("assess", help="Emit a read-only assessment prompt.")
+    assess_parser.add_argument("--synapse-workspace", required=True)
+
+    migrate_parser = subparsers.add_parser("migrate", help="Emit a safe migration prompt.")
+    migrate_parser.add_argument("--synapse-workspace", required=True)
+    migrate_parser.add_argument("--fabric-workspace", required=True)
+    migrate_parser.add_argument("--pipelines", default="*")
+    migrate_parser.add_argument("--suffix", default="_migrated")
+    migrate_parser.add_argument("--allow-overwrite", action="store_true")
+
+    validate_parser = subparsers.add_parser("validate", help="Emit a post-migration validation prompt.")
+    validate_parser.add_argument("--fabric-workspace", required=True)
+    validate_parser.add_argument("--synapse-workspace")
+
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    if args.command == "check-package":
+        return check_package()
+    if args.command == "doctor":
+        return doctor(args)
+    if args.command == "assess":
+        return emit_assessment_prompt(args)
+    if args.command == "migrate":
+        return emit_migration_prompt(args)
+    if args.command == "validate":
+        return emit_validation_prompt(args)
+
+    parser.error(f"Unknown command: {args.command}")
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -67,6 +67,15 @@ pipeline-migration/
 For more copy/paste prompts, see [examples/prompts.md](examples/prompts.md).
 For activity coverage, see [docs/support-matrix.md](docs/support-matrix.md).
 
+You can also use the optional CLI harness to check local readiness or generate safe
+agent prompts:
+
+```bash
+./pipeline-migration/bin/pipeline-migration check-package
+./pipeline-migration/bin/pipeline-migration doctor
+./pipeline-migration/bin/pipeline-migration assess --synapse-workspace my-synapse-ws
+```
+
 The agent reads [SKILL.md](SKILL.md), then loads only the resource files it needs. It will:
 
 - **Assess** (optional, read-only) — query Synapse APIs and produce a scope/complexity report.

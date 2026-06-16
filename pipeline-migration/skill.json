@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "description": "Migrate Azure Synapse Data Factory pipeline artifacts to Microsoft Fabric Data Factory with assessment, transformation guidance, validation, and migration reporting.",
   "entrypoint": "SKILL.md",
+  "commands": [
+    "bin/pipeline-migration"
+  ],
   "resources": [
     "resources/pipeline-assessment.md",
     "resources/pipeline-orchestrator.md",
