@@ -57,7 +57,7 @@ Fabric Airflow and dbt/
 
 ## Want the full walkthrough?
 
-This sample is intentionally bare-bones. For the complete story, including the bronze ingestion pipeline that feeds this Warehouse, the alternative Dataflows Gen2 and PySpark Notebook approaches to the same transformation, and why dbt Jobs can't be triggered the same way Dataflows Gen2 can — check out my book, **Microsoft Fabric Data Factory** (Packt Publishing).
+This sample is intentionally bare-bones. For the complete story, including the bronze ingestion pipeline that feeds this Warehouse, the alternative Dataflows Gen2 and PySpark Notebook approaches to the same transformation, and why dbt Jobs can't be triggered the same way Dataflows Gen2 can — I'm currently authoring a complete end-to-end book: **Microsoft Fabric Data Factory** (Packt Publishing).
 
 ---
 
