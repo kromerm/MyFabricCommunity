@@ -1,0 +1,10 @@
+# models/sources.yml
+version: 2
+
+sources:
+  - name: bronze
+    database: NYCTaxi_Warehouse
+    schema: dbo
+    tables:
+      - name: yellow_tripdata
+      - name: taxi_zone_lookup

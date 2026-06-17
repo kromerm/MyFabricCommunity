@@ -1,0 +1,7 @@
+# dbt_project.yml
+name: 'nyc_taxi'
+version: '1.0.0'
+
+models:
+  nyc_taxi:
+    +materialized: table
