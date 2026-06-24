@@ -26,7 +26,10 @@ Databricks activities, and Azure Batch. See
 
 ```
 pipeline-migration/
+├── skill.json        # Skill package metadata for discovery
 ├── SKILL.md          # The skill instructions the AI agent reads
+├── docs/             # User-facing references
+├── examples/         # Quickstart and copy/paste prompts
 └── resources/        # Reference docs the agent loads on demand
     ├── pipeline-assessment.md                  # Read-only scope/complexity report (run first)
     ├── pipeline-orchestrator.md                # End-to-end inline migration runner
@@ -55,10 +58,23 @@ pipeline-migration/
 
 1. Clone or download this repo so your agent can read the `pipeline-migration/` folder.
 2. Sign in with the Azure CLI: `az login`.
-3. Ask your agent to run the skill. Example prompts:
+3. Start with the [quickstart](examples/quickstart.md), then ask your agent to run the skill.
+   Example prompts:
 
    - *"Use the pipeline-migration skill to assess my Synapse workspace `my-synapse-ws` before migrating."*
    - *"Migrate all pipelines from Synapse workspace `my-synapse-ws` to Fabric workspace `My Fabric WS`, appending `_migrated` to each name."*
+
+For more copy/paste prompts, see [examples/prompts.md](examples/prompts.md).
+For activity coverage, see [docs/support-matrix.md](docs/support-matrix.md).
+
+You can also use the optional CLI harness to check local readiness or generate safe
+agent prompts:
+
+```bash
+./pipeline-migration/bin/pipeline-migration check-package
+./pipeline-migration/bin/pipeline-migration doctor
+./pipeline-migration/bin/pipeline-migration assess --synapse-workspace my-synapse-ws
+```
 
 The agent reads [SKILL.md](SKILL.md), then loads only the resource files it needs. It will:
 
