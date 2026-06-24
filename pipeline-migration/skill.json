@@ -1,0 +1,45 @@
+{
+  "name": "pipeline-migration",
+  "title": "Synapse Pipeline Migration to Fabric",
+  "version": "0.1.0",
+  "description": "Migrate Azure Synapse Data Factory pipeline artifacts to Microsoft Fabric Data Factory with assessment, transformation guidance, validation, and migration reporting.",
+  "entrypoint": "SKILL.md",
+  "resources": [
+    "resources/pipeline-assessment.md",
+    "resources/pipeline-orchestrator.md",
+    "resources/activity-mapping.md",
+    "resources/notebook-activity-migration.md",
+    "resources/linked-service-to-connection.md",
+    "resources/dataset-inlining.md",
+    "resources/global-parameters-to-variable-library.md",
+    "resources/pipeline-gotchas.md",
+    "resources/validation-testing.md",
+    "resources/migration-report.md"
+  ],
+  "examples": [
+    "examples/quickstart.md",
+    "examples/prompts.md"
+  ],
+  "docs": [
+    "docs/support-matrix.md"
+  ],
+  "tags": [
+    "microsoft-fabric",
+    "data-factory",
+    "synapse",
+    "pipeline-migration",
+    "agent-skill"
+  ],
+  "requires": {
+    "azureCli": true,
+    "azureCliLogin": true,
+    "synapseWorkspaceAccess": true,
+    "fabricWorkspaceAccess": true
+  },
+  "safety": {
+    "recommendedFirstStep": "assessment",
+    "dryRunRecommended": true,
+    "migratesTriggers": false,
+    "overwritesExistingItemsByDefault": false
+  }
+}
